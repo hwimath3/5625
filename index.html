@@ -1,25 +1,413 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz 5625</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수열과 규칙성: 격자판의 합 마스터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <!-- KaTeX JS -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <!-- Auto-render JS -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .math-display { font-size: 1.1rem; margin: 1.5rem 0; padding: 1.2rem; background-color: #ffffff; border-left: 4px solid #3b82f6; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+        .concept-box { background-color: #eff6ff; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #dbeafe; }
+        .option-label { transition: all 0.2s; cursor: pointer; display: block; }
+        .option-label:hover { background-color: #eff6ff; transform: translateY(-2px); border-color: #3b82f6; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* 버튼 비활성화 스타일 */
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex flex-col items-center py-10">
-    <div class="bg-white p-8 rounded-xl shadow-lg max-w-2xl w-full text-center">
-        <h1 class="text-3xl font-bold text-slate-800 mb-6">Quiz 5625</h1>
-        <div class="mb-8">
-            <span class="inline-block bg-yellow-100 text-yellow-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded">吏꾪뻾 以?/span>
-            <p class="text-slate-600 mt-2">?꾩옱 蹂??臾몄젣 ?앹꽦 ?湲?以묒엯?덈떎.</p>
+<body class="p-4 sm:p-8 md:p-12 text-slate-800">
+
+    <div id="app" class="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl p-6 sm:p-10 border border-slate-100">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center text-slate-900 mb-2">Quiz 5625</h1>
+        <p class="text-center text-slate-500 mb-8">규칙을 찾아 $\sum$로 해결하는 10단계 빌드업</p>
+
+        <!-- Study Page: 이름 입력 및 핵심 원리 설명 -->
+        <div id="page-study" class="page active">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-2">오늘의 핵심 원리</h2>
+
+            <div class="concept-box">
+                <h3 class="text-xl font-bold text-blue-600 mb-3">1. 등차수열의 일반항</h3>
+                <p class="text-slate-700 mb-2">첫째항이 $a$, 공차가 $d$인 등차수열의 제$n$항은 다음과 같습니다.</p>
+                <div class="math-display">
+                    $$ a_n = a + (n-1)d $$
+                </div>
+            </div>
+
+            <div class="concept-box">
+                <h3 class="text-xl font-bold text-blue-600 mb-3">2. L자형 개수 세기 (군수열 아이디어)</h3>
+                <p class="text-slate-700 mb-2">$n \times n$ 정사각형에서 $(n-1) \times (n-1)$ 정사각형을 제외한 'L자' 모양 테두리에 있는 칸의 개수는?</p>
+                <div class="math-display">
+                    $$ n^2 - (n-1)^2 = 2n - 1 \text{ (개)} $$
+                </div>
+                <p class="text-slate-700">이 문제에서는 숫자가 커질수록 바깥쪽 테두리를 감싸는 형태를 띱니다.</p>
+            </div>
+
+            <!-- 이름 입력 필드 (필수) -->
+            <div class="mt-8 mb-4">
+                <label for="username-input" class="block text-sm font-medium text-slate-600 mb-1">학생 이름</label>
+                <input type="text" id="username-input" placeholder="이름을 입력하세요" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition shadow-sm outline-none">
+            </div>
+
+            <button onclick="startQuiz()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-2 transition duration-300 shadow-lg transform hover:scale-[1.01]">
+                문제 풀이 시작하기
+            </button>
         </div>
-        
-        <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 mb-6">
-            <p class="text-sm text-slate-500 mb-2">?먮낯 臾몄젣 ?대?吏</p>
-            <img src="problem.png" alt="Problem 5625" class="max-w-full h-auto mx-auto rounded shadow-sm" />
+
+        <!-- Quiz Page: 10문제 출제 -->
+        <div id="page-quiz" class="page">
+            <div id="quiz-header" class="mb-6">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-lg font-bold text-blue-700">Step <span id="current-q-number">1</span></span>
+                    <span class="text-sm text-slate-400">Total 10 Questions</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2">
+                    <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="question-area" class="min-h-[250px] p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                <p id="question-text" class="text-xl font-medium text-slate-800 mb-8 leading-relaxed"></p>
+                <div id="options-container" class="space-y-3"></div>
+            </div>
+
+            <div id="feedback" class="mt-6 p-4 rounded-xl text-white font-semibold hidden animate-bounce-in"></div>
+
+            <!-- Buttons Area -->
+            <div class="flex gap-3 mt-8">
+                <!-- Previous Button -->
+                <button onclick="prevQuestion()" id="prev-btn" class="hidden px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 rounded-xl transition shadow-sm">
+                    이전
+                </button>
+
+                <!-- Submit / Next Buttons -->
+                <button onclick="submitAnswer()" id="submit-btn" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition shadow-md">
+                    정답 확인
+                </button>
+                <button onclick="nextQuestion()" id="next-btn" class="hidden flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-md">
+                    다음 단계
+                </button>
+            </div>
         </div>
-        
-        <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">?덈줈怨좎묠</button>
+
+        <!-- Result Page: 결과 표시 및 서버 전송 -->
+        <div id="page-results" class="page text-center p-8">
+            <div class="mb-6 text-6xl animate-pulse">🏆</div>
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-2">학습 완료!</h2>
+            <div class="text-7xl font-black text-blue-600 my-8">
+                <span id="final-score">0</span><span class="text-3xl text-slate-400">/10</span>
+            </div>
+            <div id="upload-status" class="text-sm text-slate-500 mb-8 h-6 font-medium">결과 저장 중...</div>
+            <button onclick="window.location.reload()" class="bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-50 font-bold py-3 px-8 rounded-xl transition shadow-sm">다시 도전하기</button>
+        </div>
     </div>
+
+    <script>
+        // ============================================ 
+        // 결과 전송 URL (Google Apps Script Web App)
+        // ============================================ 
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzB5ALdepM0Tu4II9BeHGDAdaC0qd2OXJp6Ofubwjc2FZ5f1aChz9ZCb1lBxkp12Xy2/exec';
+
+        let currentQuestionIndex = 0;
+        let userName = "";
+
+        // 사용자의 응답 기록을 저장하는 배열 (인덱스별로 저장)
+        let userAnswers = [];
+
+        // ============================================ 
+        // 문제 데이터: 10단계 구성 (난이도 순)
+        // ============================================ 
+        const questions = [
+            {
+                q: "주어진 수열 $-10, -7, -4, \cdots, 17$ 은 어떤 수열인가요?",
+                options: ["공차가 3인 등차수열", "공차가 -3인 등차수열", "공비가 3인 등비수열", "규칙이 없는 수열"],
+                ans: "공차가 3인 등차수열",
+                exp: "$-7 - (-10) = 3$, $-4 - (-7) = 3$ 이므로 공차 $d=3$인 등차수열입니다."
+            },
+            {
+                q: "이 수열의 일반항 $a_k$를 바르게 구한 것은? (단, $k=1, 2, \cdots$)",
+                options: ["$3k - 10$", "$3k - 13$", "$3k - 7$", "$-3k + 13$"],
+                ans: "$3k - 13$",
+                exp: "첫째항 $a_1 = -10$, 공차 $d=3$이므로 $a_k = -10 + (k-1)3 = 3k - 13$ 입니다."
+            },
+            {
+                q: "수열의 마지막 항인 $17$은 몇 번째 항($a_k$)인가요?",
+                options: ["8번째", "9번째", "10번째", "11번째"],
+                ans: "10번째",
+                exp: "$3k - 13 = 17$ 을 풀면, $3k = 30$ 이므로 $k=10$ 입니다. 즉, 이 격자판에 쓰인 수는 $a_1$부터 $a_{10}$까지 총 10종류입니다."
+            },
+            {
+                q: "그림의 규칙을 볼 때, 가장 바깥쪽 테두리('L'자 형태)에 채워진 숫자들은 모두 얼마인가요?",
+                options: ["-10", "14", "17", "알 수 없음"],
+                ans: "17",
+                exp: "그림의 오른쪽 위를 보면 가로 10번째 줄과 세로 10번째 줄(가장 바깥쪽)은 가장 큰 수인 $17(a_{10})$로 채워져 있습니다."
+            },
+            {
+                q: "가장 큰 수인 $17(a_{10})$은 표에서 총 몇 칸을 차지하나요?",
+                options: ["10개", "17개", "19개", "20개"],
+                ans: "19개",
+                exp: "$10 \times 10$ 정사각형에서 $9 \times 9$ 정사각형을 뺀 개수와 같습니다. $$10^2 - 9^2 = 19$$ 또는 $2 \times 10 - 1 = 19$개 입니다."
+            },
+            {
+                q: "**[규칙 일반화]** $k$번째 항인 $a_k$는 표에서 몇 번 등장하나요?",
+                options: ["$k$번", "$k^2$번", "$2k$번", "$2k - 1$번"],
+                ans: "$2k - 1$번",
+                exp: "$a_k$는 $k \times k$ 격자의 가장 바깥쪽 테두리를 구성합니다. 따라서 개수는 $k^2 - (k-1)^2 = 2k - 1$ 입니다."
+            },
+            {
+                q: "이제 표에 있는 모든 수의 합 $S$를 구하는 식을 세워봅시다. 옳은 식은?",
+                options: ["$\sum_{k=1}^{10} (3k-13)$", "$\sum_{k=1}^{10} (2k-1)(3k-13)$", "$\sum_{k=1}^{10} k(3k-13)$", "$\sum_{k=1}^{10} (2k-1)$"],
+                ans: "$\sum_{k=1}^{10} (2k-1)(3k-13)$",
+                exp: "(개수) $\times$ (값)을 모두 더해야 합니다. 즉, $\sum_{k=1}^{10} (\text{개수}) \times a_k$ 형태가 되어야 합니다."
+            },
+            {
+                q: "$\sum_{k=1}^{10} (6k^2 - 29k + 13)$ 을 계산하기 위해 필요한 $\sum k^2$ ($k=1$부터 $10$까지)의 값은?",
+                options: ["55", "225", "385", "505"],
+                ans: "385",
+                exp: "$$\sum_{k=1}^{10} k^2 = \frac{10(11)(21)}{6} = 385$$ 입니다."
+            },
+            {
+                q: "위의 계산 과정을 통해 구한 **최종적인 모든 수의 합**은 얼마입니까?",
+                options: ["845", "920", "1055", "1240"],
+                ans: "845",
+                exp: "$$6(385) - 29(55) + 13(10) = 2310 - 1595 + 130 = 845$$"
+            },
+            {
+                q: "**[심화 응용]** 만약 표가 $20 \times 20$ 칸이고, 같은 규칙으로 수를 채웠다면 $a_{20}$은 몇 번 등장할까요?",
+                options: ["19번", "39번", "40번", "400번"],
+                ans: "39번",
+                exp: "$n=20$일 때의 테두리 개수이므로 $2n - 1$ 공식에 대입하면, $2 \times 20 - 1 = 39$번 등장합니다."
+            }
+        ];
+
+        // 초기화
+        userAnswers = new Array(questions.length).fill(null);
+
+        // ============================================ 
+        // KaTeX 수식 렌더링 함수
+        // ============================================ 
+        function renderMath(element) {
+            renderMathInElement(element || document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ],
+                throwOnError: false
+            });
+        }
+
+        // ============================================ 
+        // 페이지 전환 함수
+        // ============================================ 
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // ============================================ 
+        // 퀴즈 시작 (이름 입력 필수)
+        // ============================================ 
+        function startQuiz() {
+            userName = document.getElementById('username-input').value.trim();
+            if (!userName) return alert("이름을 입력해주세요!");
+            showPage('page-quiz');
+            loadQuestion();
+        }
+
+        // ============================================ 
+        // 문제 로드 함수
+        // ============================================ 
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            const qNum = document.getElementById('current-q-number');
+            const qText = document.getElementById('question-text');
+            const optContainer = document.getElementById('options-container');
+            const progress = document.getElementById('progress-bar');
+
+            // 버튼 요소
+            const prevBtn = document.getElementById('prev-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const feedbackDiv = document.getElementById('feedback');
+
+            qNum.textContent = currentQuestionIndex + 1;
+            qText.innerHTML = q.q;
+            progress.style.width = `${(currentQuestionIndex / questions.length) * 100}%`;
+
+            // 옵션 렌더링
+            optContainer.innerHTML = '';
+            const existingAnswer = userAnswers[currentQuestionIndex]; // 이미 푼 기록이 있는지 확인
+
+            q.options.forEach(opt => {
+                const label = document.createElement('label');
+                label.className = "option-label block p-4 bg-white border border-slate-200 rounded-xl shadow-sm";
+
+                // 만약 이미 푼 문제라면, 선택했던 값 체크
+                const isChecked = existingAnswer && existingAnswer.selected === opt;
+
+                label.innerHTML = `
+                    <div class="flex items-center">
+                        <input type="radio" name="quiz-opt" value="${opt}"
+                            class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
+                            ${isChecked ? 'checked' : ''}
+                            ${existingAnswer ? 'disabled' : ''}> <!-- 풀었으면 수정 불가 -->
+                        <span class="text-lg ${existingAnswer ? 'text-slate-600' : ''}">${opt}</span>
+                    </div>`;
+                optContainer.appendChild(label);
+            });
+
+            // UI 상태 제어
+            // 1. 이전 버튼: 첫 문제면 숨김, 아니면 보임
+            if (currentQuestionIndex === 0) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            // 2. 이미 푼 문제인가?
+            if (existingAnswer) {
+                // 이미 풀었다면: 피드백 보이기, 정답 확인 버튼 숨기기, 다음 버튼 보이기
+                showFeedbackUI(existingAnswer.isCorrect, q.ans, q.exp);
+                submitBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+            } else {
+                // 안 풀었다면: 피드백 숨기기, 정답 확인 버튼 보이기, 다음 버튼 숨기기
+                feedbackDiv.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+            }
+
+            renderMath(document.getElementById('question-area'));
+        }
+
+        // ============================================ 
+        // 피드백 UI 표시 함수
+        // ============================================ 
+        function showFeedbackUI(isCorrect, ans, exp) {
+            const fb = document.getElementById('feedback');
+            fb.classList.remove('hidden');
+            fb.className = `mt-6 p-5 rounded-xl text-white shadow-lg ${isCorrect ? 'bg-emerald-500' : 'bg-rose-500'}`;
+            fb.innerHTML = `
+                <div class="flex items-center mb-2">
+                    <span class="text-2xl mr-2">${isCorrect ? '🎉' : '❌'}</span>
+                    <span class="text-lg font-bold">${isCorrect ? "정답입니다!" : "아쉽네요."}</span>
+                </div>
+                ${!isCorrect ? `<div class="mb-2">정답: <strong>${ans}</strong></div>` : ''}
+                <div class="text-sm font-normal opacity-90 border-t border-white/20 pt-2 mt-2 leading-relaxed">${exp}</div>
+            `;
+            renderMath(fb);
+        }
+
+        // ============================================ 
+        // 정답 제출 함수
+        // ============================================ 
+        function submitAnswer() {
+            const selected = document.querySelector('input[name="quiz-opt"]:checked');
+            if (!selected) return alert("보기를 선택해주세요!");
+
+            const q = questions[currentQuestionIndex];
+            const clean = (s) => s.replace(/\s/g, '');
+            const isCorrect = clean(selected.value) === clean(q.ans);
+
+            // 결과 저장
+            userAnswers[currentQuestionIndex] = {
+                selected: selected.value,
+                isCorrect: isCorrect
+            };
+
+            // UI 업데이트
+            showFeedbackUI(isCorrect, q.ans, q.exp);
+
+            // 라디오 버튼 비활성화 (수정 방지)
+            const radios = document.querySelectorAll('input[name="quiz-opt"]');
+            radios.forEach(r => r.disabled = true);
+
+            document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        // ============================================ 
+        // 이전/다음 문제 이동 함수
+        // ============================================ 
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        // ============================================ 
+        // 퀴즈 완료 및 결과 표시
+        // ============================================ 
+        function finishQuiz() {
+            showPage('page-results');
+
+            // 점수 계산 (저장된 배열 기반)
+            const finalScore = userAnswers.filter(a => a && a.isCorrect).length;
+            const scoreDisplay = document.getElementById('final-score');
+
+            // 점수 애니메이션
+            let currentDisplayScore = 0;
+            const interval = setInterval(() => {
+                if (currentDisplayScore >= finalScore) {
+                    clearInterval(interval);
+                    scoreDisplay.textContent = finalScore;
+                } else {
+                    currentDisplayScore++;
+                    scoreDisplay.textContent = currentDisplayScore;
+                }
+            }, 100);
+            if(finalScore === 0) scoreDisplay.textContent = 0;
+
+            sendResult(finalScore);
+        }
+
+        // ============================================ 
+        // 결과를 Google Sheets로 전송하는 함수
+        // ============================================ 
+        function sendResult(finalScore) {
+            const status = document.getElementById('upload-status');
+            const data = {
+                name: userName,
+                score: finalScore,
+                quizTitle: document.querySelector('h1').textContent,
+                date: new Date().toLocaleString()
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                status.textContent = "결과가 안전하게 저장되었습니다.";
+                status.classList.replace('text-slate-500', 'text-emerald-600');
+            })
+            .catch(() => {
+                status.textContent = "결과 저장에 실패했습니다. (네트워크 확인)";
+                status.classList.replace('text-slate-500', 'text-rose-600');
+            });
+        }
+
+        window.onload = () => renderMath();
+    </script>
 </body>
 </html>
